@@ -13,6 +13,8 @@ Dumb scripting language written in Python based on Python which the world never 
 
 * I've been loading from YAML file or translating from a YAML-formatted string
 
+* See the 'Containers' section for building this beast
+
 ## Language Schema (am I using that word correctly?)
 
 BODY := STATEMENT [[ + STATEMENT ]]
@@ -98,3 +100,10 @@ try <variable>
    raise <string>
 end
 ```
+
+## Containers
+
+* "make image" creates the local daytona-builder image with a "make" entrypoint
+* the d.sh script invokes it, passing command line arguments along
+  * So, "./d.sh test" invokes the "test" makefile target
+* Yes I know this is crude but I'm still figuring out the best approach
