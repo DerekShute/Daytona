@@ -1,6 +1,10 @@
 # Local script that 'run_something.py' grabs
 script.yml
 
+# Emacs detritus
+*~
+\#*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
