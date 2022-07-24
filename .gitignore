@@ -1,3 +1,6 @@
+# Local script that 'run_something.py' grabs
+script.yml
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
