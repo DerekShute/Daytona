@@ -5,7 +5,7 @@
 import yaml
 import unittest
 from parameterized import parameterized
-from daytona import primitive, register_keywords, execute_script, register_primitive, ScriptError, register_variables
+from daytona import primitive, register_keywords, execute_script, ScriptError, register_variables
 
 variables = {
     'var1': 'oneVar',
@@ -36,9 +36,11 @@ rets-retval:
 ARGS = []
 CALLS = 0
 
+
 @primitive('voo')
 def do_voo(args, **kwargs):
     return '1'
+
 
 @primitive('var')
 def do_output(args, **kwargs):
@@ -92,7 +94,7 @@ class TestVariables(unittest.TestCase):
             excepted = True
         self.assertTrue(excepted)
 
-    @parameterized.expand([('two-args', ('one',) , 'two-args@1: No such arg 1'),
+    @parameterized.expand([('two-args', ('one',), 'two-args@1: No such arg 1'),
                            ])
     def test_run_excepts_args(self, keyword, args, exception_str):
         excepted = False

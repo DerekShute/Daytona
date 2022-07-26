@@ -5,7 +5,7 @@
 import yaml
 import unittest
 from parameterized import parameterized
-from daytona import primitive, register_keywords, execute_script, register_primitive, ScriptError, register_variables
+from daytona import primitive, register_keywords, execute_script, ScriptError, register_variables
 
 variables = {
     'var1': 'oneVar',
