@@ -17,7 +17,7 @@ if __name__ == '__main__':
                  "--cov-report=term-missing",
                  "tests"])
     end = time.process_time()
-    
+
     print(f'=== TEST RUN TIME: {end - start} microseconds')
 
 # EOF

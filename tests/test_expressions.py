@@ -5,7 +5,7 @@
 import yaml
 import unittest
 from parameterized import parameterized
-from daytona import primitive, register_keywords, execute_script, register_primitive, ScriptError
+from daytona import primitive, register_keywords, execute_script, ScriptError
 
 
 body = """
@@ -20,14 +20,16 @@ unclosed:
 ARGS = []
 CALLS = 0
 
+
 @primitive('ex2')
-def do_output(args, **kwargs):
+def do_ex2_keyword(args, **kwargs):
     global ARGS, CALLS
     print(f'test_exp2: {args}')
     return args[0]
 
+
 @primitive('ex')
-def do_output(args, **kwargs):
+def do_ex_keyword(args, **kwargs):
     global ARGS, CALLS
     print(f'test_expressions: {args}')
     ARGS.append(args)
@@ -54,6 +56,7 @@ class TestExecution(unittest.TestCase):
     def test_simple(self, keyword, call_list):
         execute_script(keyword)
         self.assertEqual(ARGS, call_list)
+
     @parameterized.expand([('unclosed', 'unclosed@1: Unclosed expression'),
                            ])
     def test_excepts(self, keyword, exception_str):

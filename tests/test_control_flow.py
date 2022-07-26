@@ -4,9 +4,8 @@
 
 import yaml
 import unittest
-from unittest.mock import patch, call
 from parameterized import parameterized
-from daytona import primitive, register_keywords, execute_script, register_primitive, ScriptError, register_variables
+from daytona import primitive, register_keywords, execute_script, ScriptError
 
 body = """
 does_nothing:

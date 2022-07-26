@@ -5,7 +5,7 @@
 import yaml
 import unittest
 from parameterized import parameterized
-from daytona import primitive, register_keywords, execute_script, register_primitive, ScriptError, register_variables
+from daytona import primitive, register_keywords, execute_script, ScriptError, register_variables
 
 variables = {
     'var1': 'oneVar',
@@ -38,6 +38,7 @@ invalid-add-arg:
 ARGS = []
 CALLS = 0
 
+
 @primitive('math')
 def do_math(args, **kwargs):
     global ARGS, CALLS
@@ -66,7 +67,7 @@ class TestMath(unittest.TestCase):
                            ('adds', [('48',)]),
                            ])
     def test_simple(self, keyword, call_list):
-        returned = execute_script(keyword)
+        execute_script(keyword)
         self.assertEqual(ARGS, call_list)
 
     @parameterized.expand([('dec-faults', 'dec-faults@1: "--" keyword is unary'),

@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from functools import wraps
 from typing import Dict, Any, List
 
+
 KEYWORDS: Dict[str, Any] = {}
 VARIABLES: Dict[str, Any] = {}
 CONTROL_KEYWORDS = ('if', 'else', 'elif', 'end')  # There must be a better way
@@ -10,7 +11,7 @@ CONTROL_KEYWORDS = ('if', 'else', 'elif', 'end')  # There must be a better way
 # ===== ScriptError Exception =====
 
 class ScriptError(Exception):
-    def __init__(self, context = None, msg = None):
+    def __init__(self, context=None, msg=None):
         self.context = context
         self.msg = msg
         super().__init__(self.msg)
@@ -30,6 +31,7 @@ class InterpreterState:
     STATE_IF_DONE = 3
     STATE_ELSE = 4
 
+
 @dataclass
 class Context:
     skipping: bool = False
@@ -38,11 +40,13 @@ class Context:
     state = InterpreterState.STATE_NONE
     retval: str = 'None'
 
+
 @dataclass
 class Expression:
     parent: Any = None
     words: List = field(default_factory=list)
     depth: int = 0
+
 
 # ===== Service Routines =====
 
@@ -50,16 +54,17 @@ def execute_keyword(context, keyword, *args):
     kw_val = KEYWORDS.get(keyword)
     if not kw_val:
         raise ScriptError(context, f'No such keyword "{keyword}"')
-    #print(f'{context} : "{keyword}" with {args}')
+    # print(f'{context} : "{keyword}" with {args}')
     if callable(kw_val):
         ret = kw_val(args, context=context)  # TODO: reverse this
     else:
         ret = execute_statements(keyword, kw_val, args)
     return ret if ret else 'None'
 
+
 def evaluate_expression(context, words, args):
     expr = Expression()
-    for index,word in enumerate(words):
+    for index, word in enumerate(words):
         if word == '(':  # Start expression
             nexpr = Expression(parent=expr)
             nexpr.parent = expr
@@ -73,7 +78,7 @@ def evaluate_expression(context, words, args):
             expr.words.append(word)
     context.retval = execute_keyword(context, *expr.words)
     if expr.depth > 0:
-        raise ScriptError(context, f'Unclosed expression')
+        raise ScriptError(context, 'Unclosed expression')
     return context.retval
 
 
@@ -89,10 +94,10 @@ def parse_line(context, line, args):
                 argno = int(word[1:])
                 if not args or argno >= len(args):
                     raise ScriptError(context, f'No such arg {argno}')
-                #print(f'  {word} ==> argument {argno} {args[argno]}')
+                # print(f'  {word} ==> argument {argno} {args[argno]}')
                 words[index] = args[argno]
             elif VARIABLES.get(word[1:]):
-                #print(f'  {word} ==> {VARIABLES[word[1:]]}')
+                # print(f'  {word} ==> {VARIABLES[word[1:]]}')
                 words[index] = VARIABLES[word[1:]]
             else:
                 raise ScriptError(context, f'No variable {word}')
@@ -102,7 +107,7 @@ def parse_line(context, line, args):
 def execute_statements(keyword, body, args=None):
     context = Context(parent_keyword=keyword)
     for line in body:
-        #print(f'{context}: Executing line "{line}" args {args}')
+        # print(f'{context}: Executing line "{line}" args {args}')
         words = parse_line(context, line, args)
         if words:
             context.retval = evaluate_expression(context, words, args)
@@ -150,7 +155,7 @@ def execute_script(start_keyword, *args):
     if not KEYWORDS.get(start_keyword):  # More intuitive error output
         raise ScriptError(None, f'No such keyword "{start_keyword}"')
     context = Context(parent_keyword=start_keyword)
-    #print(f'{context} execute_script {start_keyword} with {args}')
+    # print(f'{context} execute_script {start_keyword} with {args}')
     return execute_keyword(context, start_keyword, *args)
 
 
@@ -187,6 +192,7 @@ def do_elif_keyword(args, context=None, **kwargs):
     else:
         raise ScriptError(context, '"elif" keyword in wrong state')
 
+
 @primitive('else')
 def do_else_keyword(args, context=None, **kwargs):
     if args and len(args) > 0:
@@ -214,6 +220,7 @@ def do_end_keyword(args, context=None, **kwargs):
     context.state = InterpreterState.STATE_NONE
     context.skipping = False
 
+
 # ===== Base keywords =====
 
 @primitive('print')
@@ -222,10 +229,11 @@ def do_print(args, **kwargs):
 
 
 @primitive('set')
-def do_set(args, context = None, **kwargs):
+def do_set(args, context=None, **kwargs):
     if not args or len(args) != 2:
         raise ScriptError(context, '"set" keyword requires two arguments')
     VARIABLES[args[0]] = str(args[1])
+
 
 # TODO: sleep, exit, return
 
@@ -234,7 +242,7 @@ def do_set(args, context = None, **kwargs):
 # TODO: decorator such that it ensures arg count and type
 
 @primitive('++')
-def do_increment(args, context = None, **kwargs):
+def do_increment(args, context=None, **kwargs):
     if not args or len(args) != 1:
         raise ScriptError(context, '"++" keyword is unary')
     val = None
@@ -244,8 +252,9 @@ def do_increment(args, context = None, **kwargs):
         raise ScriptError(context, '"++" keyword accepts numbers only') from ex
     return str(val + 1)
 
+
 @primitive('--')
-def do_decrement(args, context = None, **kwargs):
+def do_decrement(args, context=None, **kwargs):
     if not args or len(args) != 1:
         raise ScriptError(context, '"--" keyword is unary')
     try:
@@ -253,6 +262,7 @@ def do_decrement(args, context = None, **kwargs):
     except ValueError as ex:
         raise ScriptError(context, '"--" keyword accepts numbers only') from ex
     return str(val - 1)
+
 
 @primitive('+')
 def do_add(args, context=None, **kwargs):
