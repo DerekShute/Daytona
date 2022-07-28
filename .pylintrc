@@ -1,0 +1,24 @@
+
+[FORMAT]
+# This should align with the flake8 setting
+max-line-length=120
+
+# 
+# Four lines sounds good to me
+docstring-min-length=4
+
+#
+# global-statement : I will be the judge of that
+# fixme : early for that
+# too-few-public-methods : InterpreterState is a bucket of constants
+
+disable=global-statement,
+        fixme,
+        too-few-public-methods
+
+# Stats file turned off
+
+persistent=no
+
+# EOF
+

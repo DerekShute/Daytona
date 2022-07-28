@@ -2,12 +2,12 @@
     Unit Test : Control Flow
 """
 
-import yaml
 import unittest
+import yaml
 from parameterized import parameterized
 from daytona import primitive, register_keywords, execute_script, ScriptError
 
-body = """
+BODY = """
 does_nothing:
   - cf True
 if-false:
@@ -108,19 +108,22 @@ CALLS = 0
 
 
 @primitive('cf')
-def do_output(args, **kwargs):
-    global ARGS, CALLS
+def do_keyword(args, context):
+    '''keyword defined to track hits'''
+    assert context
+    global CALLS
     print(f'test_control_flow: {args}')
     ARGS.append(args)
     CALLS += 1
 
 
 class TestControl(unittest.TestCase):
+    '''Testing of control flow behavior'''
 
     @classmethod
     def setUpClass(cls):
         assert cls
-        body_dict = yaml.safe_load(body)
+        body_dict = yaml.safe_load(BODY)
         register_keywords(body_dict)
 
     def setUp(self):
@@ -139,6 +142,8 @@ class TestControl(unittest.TestCase):
                            ('if-false-elif-false-else', 1),
                            ])
     def test_control_taken(self, keyword, call_count):
+        '''We expect these to take the indicated branch'''
+
         execute_script(keyword)
         self.assertEqual(CALLS, call_count)
         if call_count == 1:
@@ -157,6 +162,8 @@ class TestControl(unittest.TestCase):
                            ('if-else-else', 'if-else-else@5: "else" keyword is extraneous'),
                            ])
     def test_control_excepts(self, keyword, exception_str):
+        '''We expect these cases to generate ScriptError'''
+
         excepted = False
         try:
             execute_script(keyword)

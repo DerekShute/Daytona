@@ -15,6 +15,18 @@ Dumb scripting language written in Python based on Python which the world never 
 
 * See the 'Containers' section for building this beast
 
+## Make targets
+
+### check
+
+ * flake8 github-default
+
+ * pylint per config file
+
+### test
+
+ * pytest
+
 ## Language Schema (am I using that word correctly?)
 
 BODY := STATEMENT [[ + STATEMENT ]]

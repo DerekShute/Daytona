@@ -2,8 +2,8 @@
 Run some script.
 '''
 
-import yaml
 import time
+import yaml
 import daytona
 
 variables = {
@@ -14,7 +14,7 @@ variables = {
 start = time.process_time()
 
 # TODO: multiple documents
-with open('script.yml', 'r') as f:
+with open('script.yml', 'r', encoding='utf-8') as f:
     body_dict = yaml.safe_load(f)
 
 daytona.register_keywords(body_dict)

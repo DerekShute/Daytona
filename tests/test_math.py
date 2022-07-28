@@ -2,17 +2,17 @@
     Unit Test : Base run
 """
 
-import yaml
 import unittest
+import yaml
 from parameterized import parameterized
 from daytona import primitive, register_keywords, execute_script, ScriptError, register_variables
 
-variables = {
+VARIABLES = {
     'var1': 'oneVar',
     'var2': 2
     }
 
-body = """
+BODY = """
 increment:
   - math ( ++ 1 )
   - math ( ++ $var2 )
@@ -40,21 +40,24 @@ CALLS = 0
 
 
 @primitive('math')
-def do_math(args, **kwargs):
-    global ARGS, CALLS
+def do_math(args, context):
+    '''math keyword for above testing'''
+    assert context
+    global CALLS
     print(f'test_math: {args}')
     ARGS.append(args)
     CALLS += 1
 
 
 class TestMath(unittest.TestCase):
+    '''Test the math/expression logic'''
 
     @classmethod
     def setUpClass(cls):
         assert cls
-        body_dict = yaml.safe_load(body)
+        body_dict = yaml.safe_load(BODY)
         register_keywords(body_dict)
-        register_variables(variables)
+        register_variables(VARIABLES)
 
     def setUp(self):
         assert self
@@ -67,6 +70,7 @@ class TestMath(unittest.TestCase):
                            ('adds', [('48',)]),
                            ])
     def test_simple(self, keyword, call_list):
+        '''Everything that should and does work'''
         execute_script(keyword)
         self.assertEqual(ARGS, call_list)
 
@@ -78,6 +82,7 @@ class TestMath(unittest.TestCase):
                            ('invalid-add-arg', 'invalid-add-arg@1: "+" keyword accepts numbers only'),
                            ])
     def test_excepts(self, keyword, exception_str):
+        '''Things we expect to throw ScriptError'''
         excepted = False
         try:
             execute_script(keyword)

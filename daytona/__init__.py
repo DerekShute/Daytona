@@ -1,3 +1,7 @@
+'''
+Daytona import module
+'''
+
 from dataclasses import dataclass, field
 from functools import wraps
 from typing import Dict, Any, List
@@ -11,6 +15,7 @@ CONTROL_KEYWORDS = ('if', 'else', 'elif', 'end')  # There must be a better way
 # ===== ScriptError Exception =====
 
 class ScriptError(Exception):
+    '''Generalized grammar error'''
     def __init__(self, context=None, msg=None):
         self.context = context
         self.msg = msg
@@ -25,6 +30,7 @@ class ScriptError(Exception):
 # ===== Context =====
 
 class InterpreterState:
+    '''Bucket type for interpreter state machine'''
     STATE_NONE = 0
     STATE_IF_RUN = 1
     STATE_IF_PASS = 2
@@ -34,6 +40,7 @@ class InterpreterState:
 
 @dataclass
 class Context:
+    '''Execution context w/r/t control sequences'''
     skipping: bool = False
     parent_keyword: str = ''  # The keyword this is executing from
     line_no: int = 1
@@ -51,6 +58,7 @@ class Expression:
 # ===== Service Routines =====
 
 def execute_keyword(context, keyword, *args):
+    '''Execute a keyword, breaking it down to a statement body'''
     kw_val = KEYWORDS.get(keyword)
     if not kw_val:
         raise ScriptError(context, f'No such keyword "{keyword}"')
@@ -62,30 +70,32 @@ def execute_keyword(context, keyword, *args):
     return ret if ret else 'None'
 
 
-def evaluate_expression(context, words, args):
+def evaluate_expression(context, words):
+    '''evaluate subexpressions and apply arguments to operator'''
     expr = Expression()
-    for index, word in enumerate(words):
+    for word in words:
         if word == '(':  # Start expression
             nexpr = Expression(parent=expr)
             nexpr.parent = expr
             nexpr.depth = expr.depth + 1
             expr = nexpr
         elif word == ')':  # End expression
-            context.retval = execute_keyword(context, *expr.words)  # TODO return value
+            context.retval = execute_keyword(context, expr.words[0], *expr.words[1:])
             expr = expr.parent
             expr.words.append(context.retval)
         else:  # Something in the middle of the expression
             expr.words.append(word)
-    context.retval = execute_keyword(context, *expr.words)
+    context.retval = execute_keyword(context, expr.words[0], *expr.words[1:])
     if expr.depth > 0:
         raise ScriptError(context, 'Unclosed expression')
     return context.retval
 
 
 def parse_line(context, line, args):
+    '''Parse a line of text and resolve variables in it'''
     words = line.split()
     if context.skipping and words[0] not in CONTROL_KEYWORDS:
-        return
+        return None
     for index, word in enumerate(words):  # Note includes keyword
         if word == '$?':   # Return value of last expression
             words[index] = context.retval
@@ -105,12 +115,13 @@ def parse_line(context, line, args):
 
 
 def execute_statements(keyword, body, args=None):
+    '''Execute a body of statements (a list of strings)'''
     context = Context(parent_keyword=keyword)
     for line in body:
         # print(f'{context}: Executing line "{line}" args {args}')
         words = parse_line(context, line, args)
         if words:
-            context.retval = evaluate_expression(context, words, args)
+            context.retval = evaluate_expression(context, words)
         context.line_no += 1
     if context.state != InterpreterState.STATE_NONE:
         context.line_no = len(body)  # more intuitive to point to last line
@@ -123,29 +134,26 @@ def execute_statements(keyword, body, args=None):
 #
 
 def register_primitive(name, func):
-    global KEYWORDS
     KEYWORDS[name] = func
 
 
 def primitive(name):
-    def decorate(fn):
-        @wraps(fn)
+    '''Keyword implemented in Python directly'''
+    def decorate(function):
+        @wraps(function)
         def wrapper(*args, **kwargs):
-            # TODO: auto management of Context?
-            return fn(*args, **kwargs)  # NOTE: unit test coverage misses this line it is a mystery
-        register_primitive(name, fn)
+            return function(*args, **kwargs)  # NOTE: unit test coverage misses this line it is a mystery
+        register_primitive(name, function)
         return wrapper
     return decorate
 
 
 def register_keywords(keyword_dict):
-    global KEYWORDS
     # Note will squash existing keys
     KEYWORDS.update(keyword_dict)
 
 
 def register_variables(variables_dict):
-    global VARIABLES
     # Note will squash existing keys
     VARIABLES.update(variables_dict)
 
@@ -164,7 +172,8 @@ def execute_script(start_keyword, *args):
 # ===== Control Flow =====
 
 @primitive('if')
-def do_if_keyword(args, context=None, **kwargs):
+def do_if_keyword(args, context=None):
+    '''If keyword'''
     if not args or len(args) != 1:
         raise ScriptError(context, '"if" keyword requires one argument')
     print('IF')
@@ -179,7 +188,8 @@ def do_if_keyword(args, context=None, **kwargs):
 
 
 @primitive('elif')
-def do_elif_keyword(args, context=None, **kwargs):
+def do_elif_keyword(args, context=None):
+    '''elif keyword'''
     if not args or len(args) != 1:
         raise ScriptError(context, '"elif" keyword requires one argument')
     if context.state == InterpreterState.STATE_IF_RUN:
@@ -194,7 +204,8 @@ def do_elif_keyword(args, context=None, **kwargs):
 
 
 @primitive('else')
-def do_else_keyword(args, context=None, **kwargs):
+def do_else_keyword(args, context=None):
+    '''Else keyword'''
     if args and len(args) > 0:
         raise ScriptError(context, '"else" keyword has arguments')
     if context.state == InterpreterState.STATE_ELSE:
@@ -208,14 +219,15 @@ def do_else_keyword(args, context=None, **kwargs):
 
 
 @primitive('end')
-def do_end_keyword(args, context=None, **kwargs):
-    SAFE_END = (InterpreterState.STATE_IF_RUN,
+def do_end_keyword(args, context=None):
+    '''End of control block'''
+    safe_end = (InterpreterState.STATE_IF_RUN,
                 InterpreterState.STATE_IF_PASS,
                 InterpreterState.STATE_ELSE,
                 InterpreterState.STATE_IF_DONE)
     if args and len(args) > 0:
         raise ScriptError(context, '"end" keyword has arguments')
-    if context.state not in SAFE_END:
+    if context.state not in safe_end:
         raise ScriptError(context, '"end" keyword not within "if" statement')
     context.state = InterpreterState.STATE_NONE
     context.skipping = False
@@ -224,12 +236,15 @@ def do_end_keyword(args, context=None, **kwargs):
 # ===== Base keywords =====
 
 @primitive('print')
-def do_print(args, **kwargs):
+def do_print(args, context):
+    assert context
     print(' '.join([str(i) for i in args]))
 
 
 @primitive('set')
-def do_set(args, context=None, **kwargs):
+def do_set(args, context):
+    '''Set variable keyword'''
+    assert context
     if not args or len(args) != 2:
         raise ScriptError(context, '"set" keyword requires two arguments')
     VARIABLES[args[0]] = str(args[1])
@@ -242,7 +257,9 @@ def do_set(args, context=None, **kwargs):
 # TODO: decorator such that it ensures arg count and type
 
 @primitive('++')
-def do_increment(args, context=None, **kwargs):
+def do_increment(args, context):
+    '''Unary increment'''
+    assert context
     if not args or len(args) != 1:
         raise ScriptError(context, '"++" keyword is unary')
     val = None
@@ -254,7 +271,9 @@ def do_increment(args, context=None, **kwargs):
 
 
 @primitive('--')
-def do_decrement(args, context=None, **kwargs):
+def do_decrement(args, context):
+    '''Unary decrement'''
+    assert context
     if not args or len(args) != 1:
         raise ScriptError(context, '"--" keyword is unary')
     try:
@@ -265,17 +284,19 @@ def do_decrement(args, context=None, **kwargs):
 
 
 @primitive('+')
-def do_add(args, context=None, **kwargs):
+def do_add(args, context):
+    '''Addition'''
+    assert context
     if not args or len(args) == 0:
         raise ScriptError(context, '"+" keyword requires arguments')
-    sum = 0
+    sum_val = 0
     for arg in args:
         try:
-            sum += int(arg)
+            sum_val += int(arg)
         except ValueError as ex:
             raise ScriptError(context, '"+" keyword accepts numbers only') from ex
-    print(f'sum is {sum}')
-    return str(sum)
+    print(f'sum is {sum_val}')
+    return str(sum_val)
 
 # TODO: subtract, multiply, divide, boolean logic
 

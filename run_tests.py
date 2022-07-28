@@ -4,9 +4,10 @@
     ***RUN TESTS FROM HERE***
 """
 
-import pytest
 import sys
 import time
+import pytest
+
 
 if __name__ == '__main__':
     sys.path.insert(0, './daytona/')

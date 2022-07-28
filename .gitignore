@@ -5,6 +5,9 @@ script.yml
 *~
 \#*
 
+# pylint stats file if any
+*.stats
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
