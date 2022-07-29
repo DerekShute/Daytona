@@ -56,7 +56,7 @@ def execute_keyword(context, keyword, *args):
     kw_val = KEYWORDS.get(keyword)
     if not kw_val:
         raise ScriptError(context, f'No such keyword "{keyword}"')
-    print(f'KW: "{keyword}" with {args} ({context.parent_keyword}@{context.line_no})')
+    # print(f'KW: "{keyword}" with {args} ({context.parent_keyword}@{context.line_no})')
     if callable(kw_val):
         context, ret = kw_val(args, context)  # TODO: reverse this
     else:
@@ -68,7 +68,7 @@ def execute_keyword(context, keyword, *args):
 
 def evaluate_expression(context, words, args):
     expr = Expression()
-    print(f'EVAL: {words} {context.skipping}')
+    # print(f'EVAL: {words} {context.skipping}')
     for index, word in enumerate(words):
         if word == '(':  # Start expression
             nexpr = Expression(parent=expr)
@@ -115,13 +115,12 @@ def execute_statements(keyword, body, args=None):
     for line in body:
         words = parse_line(context, line, args)
         if words:
-            print(f'EXEC {keyword}@{context.line_no} "{line}" args {args} - {context.state}')
+            # print(f'EXEC {keyword}@{context.line_no} "{line}" args {args} - {context.state}')
             context, context.retval = evaluate_expression(context, words, args)
         context.line_no += 1
     if context.state != InterpreterState.STATE_NONE:
         context.line_no = len(body)  # more intuitive to point to last line
         raise ScriptError(context, 'Keyword ended with unterminated if statement')
-    print(f'EXEC END {keyword}@{context.line_no}')
     return context.retval
 
 
@@ -185,15 +184,12 @@ def if_keyword(args, context):
     if context.skipping:
         new_ctx.state = InterpreterState.STATE_IF_PASS_ALL
         new_ctx.skipping = True
-        print(f'IF skip all {new_ctx}')
         return new_ctx, None
 
     if args[0] == '0':  # TODO Hey so much more to do here
-        print(f'IF skip {new_ctx}')
         new_ctx.state = InterpreterState.STATE_IF_PASS
         new_ctx.skipping = True
     else:
-        print(f'IF run {new_ctx}')
         new_ctx.state = InterpreterState.STATE_IF_RUN
         new_ctx.skipping = False
     return new_ctx, None
@@ -250,10 +246,7 @@ def end_keyword(args, context=None, **kwargs):
     if args and len(args) > 0:
         raise ScriptError(context, '"end" keyword has arguments')
 
-    print(f'END {context.parent_keyword}@{context.line_no}')
-
     if context.state not in safe_end:
-        print(f'{context} in state {context.state}')
         raise ScriptError(context, '"end" keyword not within "if" statement')
 
     pcontext = context.parent_context
@@ -316,7 +309,6 @@ def do_add(args, context):
             sum += int(arg)
         except ValueError as ex:
             raise ScriptError(context, '"+" keyword accepts numbers only') from ex
-    print(f'sum is {sum}')
     return context, str(sum)
 
 # TODO: subtract, multiply, divide, boolean logic

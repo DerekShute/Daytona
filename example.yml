@@ -1,0 +1,21 @@
+---
+# NOTE that yamllint will hate this because of the spaces after hyphen
+main:
+  - print This is an example script
+  - proc1
+  - if 1
+  -     print It performs a test
+  - else
+  -     print It has a line that does not execute
+  - end
+  - set FROTZ 1
+  - print It has a variable FROTZ with value $FROTZ
+  - print $FROTZ plus one is ( ++ $FROTZ )
+  - print FROTZ plus FROTZ is ( + $FROTZ $FROTZ )
+main2:
+  - print It has another keyword that can also be used
+  - print Because the script start keyword is a convention
+proc1:
+  - print It calls a routine
+...
+# EOF
