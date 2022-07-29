@@ -21,6 +21,8 @@ decrement:
   - math ( -- $var2 )
 adds:
   - math ( + 1 2 3 ( + 4 5 6 ) 7 8 ( ++ 9 ) $var2 )
+negative:
+  - math ( + -1 -1 )
 dec-faults:
   - ( -- )
 inc-faults:
@@ -66,6 +68,7 @@ class TestMath(unittest.TestCase):
     @parameterized.expand([('increment', [('2',), ('3',)]),
                            ('decrement', [('2',), ('1',)]),
                            ('adds', [('48',)]),
+                           ('negative', [('-2',)]),
                            ])
     def test_simple(self, keyword, call_list):
         execute_script(keyword)
