@@ -32,11 +32,12 @@ CALLS = 0
 
 
 @primitive('kw')
-def do_output(args, **kwargs):
-    global ARGS, CALLS
+def do_output(args, context):
+    global CALLS
     print(f'test_run: {args}')
     ARGS.append(args)
     CALLS += 1
+    return context, None
 
 
 class TestExecution(unittest.TestCase):

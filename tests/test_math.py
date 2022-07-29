@@ -40,11 +40,12 @@ CALLS = 0
 
 
 @primitive('math')
-def do_math(args, **kwargs):
-    global ARGS, CALLS
+def do_math(args, context):
+    global CALLS
     print(f'test_math: {args}')
     ARGS.append(args)
     CALLS += 1
+    return context, None
 
 
 class TestMath(unittest.TestCase):

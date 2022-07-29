@@ -22,18 +22,18 @@ CALLS = 0
 
 
 @primitive('ex2')
-def do_ex2_keyword(args, **kwargs):
-    global ARGS, CALLS
+def do_ex2_keyword(args, context):
     print(f'test_exp2: {args}')
-    return args[0]
+    return context, args[0]
 
 
 @primitive('ex')
-def do_ex_keyword(args, **kwargs):
-    global ARGS, CALLS
+def do_ex_keyword(args, context):
+    global CALLS
     print(f'test_expressions: {args}')
     ARGS.append(args)
     CALLS += 1
+    return context, None
 
 
 class TestExecution(unittest.TestCase):
