@@ -101,6 +101,63 @@ if-else-else:
   - else
   -     cf Does not get here
   - end
+if-nested-false:
+  - if 0
+  -     if 1
+  -         cf Does not get here
+  -     elif 0
+  -         cf Does not get here
+  -     else
+  -         cf Does not get here
+  -     end
+  -     cf Does not get here
+  - end
+if-nested-true-1:
+  - if 1
+  -     if 1
+  -         cf True
+  -     elif 0
+  -         cf Does not get here
+  -     else
+  -         cf Does not get here
+  -     end
+  - end
+  - cf True
+if-nested-true-2:
+  - if 1
+  -     if 0
+  -         cf Does not get here
+  -     elif 1
+  -         cf True
+  -     else
+  -         cf Does not get here
+  -     end
+  - end
+  - cf True
+if-nested-true-3:
+  - if 1
+  -     if 0
+  -         cf Does not get here
+  -     elif 1
+  -         cf Does not get here
+  -     else
+  -         cf True
+  -     end
+  - end
+  - cf True
+if-nested2-true:
+  - if 1
+  -     if 1
+  -         if 1
+  -             cf True
+  -         else
+  -             cf Does not get here
+  -         end
+  -     elif 1
+  -         cf Does not get here
+  -     end
+  - end
+  - cf True
 """
 
 ARGS = []
@@ -108,11 +165,12 @@ CALLS = 0
 
 
 @primitive('cf')
-def do_output(args, **kwargs):
-    global ARGS, CALLS
-    print(f'test_control_flow: {args}')
+def do_output(args, context):
+    global CALLS
+    print(f'test_control_flow: {args} @ {context}')
     ARGS.append(args)
     CALLS += 1
+    return context, None
 
 
 class TestControl(unittest.TestCase):
@@ -137,6 +195,11 @@ class TestControl(unittest.TestCase):
                            ('if-true-elif-true', 1),
                            ('if-false-elif-true', 1),
                            ('if-false-elif-false-else', 1),
+                           ('if-nested-false', 0),
+                           ('if-nested-true-1', 2),
+                           ('if-nested-true-2', 2),
+                           ('if-nested-true-3', 2),
+                           ('if-nested2-true', 2),
                            ])
     def test_control_taken(self, keyword, call_count):
         execute_script(keyword)

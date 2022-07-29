@@ -15,7 +15,7 @@ Dumb scripting language written in Python based on Python which the world never 
 
 * See the 'Containers' section for building this beast
 
-## Language Schema (am I using that word correctly?)
+## Language Grammar
 
 BODY := STATEMENT [[ + STATEMENT ]]
 
@@ -47,15 +47,23 @@ KEYWORD := string
 
 * '$?' indicates last return value
 
+* You could probably do '$thing.field' as a convention
+
 ## Implemented Keywords
 
 * "if/elif/else/end"
   * Where 'expression' is zero-false, nonzero-true
+  * Indentation is a convention but keywords appear on their own line
+  * Nesting is allowed but don't put the keywords in an expression that will almost certainly not work
+    * TODO: test for this
 
 ```
 if <expression>
     statement
     statement
+    if <expression>
+        ...
+    end
 elif <expression>
     statement
     statement
@@ -64,6 +72,7 @@ else
     statement
 end
 ```
+
 
 * A few operators
   * '+'
@@ -87,6 +96,7 @@ while <expression>
 end
 ```
 
+
 * 'return' keyword
   * Sets return value for statement block and ends statement block
 
@@ -99,7 +109,16 @@ try <variable>
    statement
    raise <string>
 end
+<variable holds string and no change otherwise>
 ```
+
+
+* String literals
+  * "string" keyword to create a string return value
+
+
+* Example 'run_something' script and give that a better name
+
 
 ## Containers
 

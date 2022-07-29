@@ -38,16 +38,17 @@ CALLS = 0
 
 
 @primitive('voo')
-def do_voo(args, **kwargs):
-    return '1'
+def do_voo(args, context):
+    return context, '1'
 
 
 @primitive('var')
-def do_output(args, **kwargs):
-    global ARGS, CALLS
+def do_output(args, context):
+    global CALLS
     print(f'test_variables: {args}')
     ARGS.append(args)
     CALLS += 1
+    return context, None
 
 
 class TestVariables(unittest.TestCase):
