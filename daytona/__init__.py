@@ -111,12 +111,14 @@ def parse_line(context, line, args):
 def execute_statements(keyword, body, args=None):
     # Always are starting fresh with context and do not return it
     context = Context(parent_keyword=keyword)
-    for line in body:
-        words = parse_line(context, line, args)
+    line_no = 1  # One based because meh
+    while line_no <= len(body):
+        context.line_no = line_no
+        words = parse_line(context, body[line_no - 1], args)
         if words:
-            # print(f'EXEC {keyword}@{context.line_no} "{line}" args {args} - {context.state}')
+            # print(f'EXEC {keyword}@{line_no}')
             context, context.retval = evaluate_expression(context, words, args)
-        context.line_no += 1
+        line_no += 1
     if context.state != InterpreterState.STATE_NONE:
         context.line_no = len(body)  # more intuitive to point to last line
         raise ScriptError(context, 'Keyword ended with unterminated if statement')
