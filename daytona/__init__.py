@@ -30,7 +30,6 @@ class InterpreterState:
     STATE_IF_PASS = 2
     STATE_IF_DONE = 3
     STATE_ELSE = 4
-    STATE_IF_PASS_ALL = 5   # Nested inside IF/ELSE block that is not executing
 
 
 @dataclass
@@ -182,7 +181,7 @@ def if_keyword(args, context):
 
     # If we're skipping everything in this block, skip everything in child
     if context.skipping:
-        new_ctx.state = InterpreterState.STATE_IF_PASS_ALL
+        new_ctx.state = InterpreterState.STATE_IF_DONE
         new_ctx.skipping = True
         return new_ctx, None
 
@@ -200,9 +199,8 @@ def elif_keyword(args, context):
     if not args or len(args) != 1:
         raise ScriptError(context, '"elif" keyword requires one argument')
 
-    if context.state == InterpreterState.STATE_IF_PASS_ALL:
+    if context.state == InterpreterState.STATE_IF_DONE:
         return context, None
-
     if context.state == InterpreterState.STATE_IF_RUN:
         context.state = InterpreterState.STATE_IF_DONE
         context.skipping = True
@@ -220,16 +218,12 @@ def else_keyword(args, context):
     if args and len(args) > 0:
         raise ScriptError(context, '"else" keyword has arguments')
 
-    if context.state == InterpreterState.STATE_IF_PASS_ALL:
-        return context, None
-
     if context.state == InterpreterState.STATE_ELSE:
         raise ScriptError(context, '"else" keyword is extraneous')
-
-    if context.state == InterpreterState.STATE_IF_PASS:
+    elif context.state == InterpreterState.STATE_IF_PASS:
         context.state = InterpreterState.STATE_ELSE
         context.skipping = False
-    if context.state in (InterpreterState.STATE_IF_RUN, InterpreterState.STATE_IF_DONE):
+    elif context.state == InterpreterState.STATE_IF_RUN:
         context.state = InterpreterState.STATE_ELSE
         context.skipping = True
     return context, None
@@ -240,8 +234,7 @@ def end_keyword(args, context=None, **kwargs):
     safe_end = (InterpreterState.STATE_IF_RUN,
                 InterpreterState.STATE_IF_PASS,
                 InterpreterState.STATE_ELSE,
-                InterpreterState.STATE_IF_DONE,
-                InterpreterState.STATE_IF_PASS_ALL)
+                InterpreterState.STATE_IF_DONE)
 
     if args and len(args) > 0:
         raise ScriptError(context, '"end" keyword has arguments')
