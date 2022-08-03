@@ -26,9 +26,9 @@ class ScriptError(Exception):
 
 class InterpreterState:
     STATE_NONE = 0
-    STATE_IF_RUN = 1
-    STATE_IF_PASS = 2
-    STATE_IF_DONE = 3
+    STATE_DONE = 1
+    STATE_IF_RUN = 2
+    STATE_IF_PASS = 3
     STATE_ELSE = 4
 
 
@@ -38,6 +38,7 @@ class Context:
     parent_context: Any = None
     parent_keyword: str = ''  # The keyword this is executing from
     line_no: int = 1
+    loop_top: int = -1
     state = InterpreterState.STATE_NONE
     retval: str = 'None'
 
@@ -111,12 +112,12 @@ def parse_line(context, line, args):
 def execute_statements(keyword, body, args=None):
     # Always are starting fresh with context and do not return it
     context = Context(parent_keyword=keyword)
-    line_no = 1  # One based because meh
-    while line_no <= len(body):
-        context.line_no = line_no
-        words = parse_line(context, body[line_no - 1], args)
+    line_no = 0
+    while line_no < len(body):
+        context.line_no = line_no + 1  # One based because meh
+        words = parse_line(context, body[line_no], args)
         if words:
-            # print(f'EXEC {keyword}@{line_no}')
+            print(f'EXEC {keyword}@{context.line_no}: {body[line_no]}')
             context, context.retval = evaluate_expression(context, words, args)
         line_no += 1
     if context.state != InterpreterState.STATE_NONE:
@@ -169,6 +170,29 @@ def execute_script(start_keyword, *args):
 
 # ===== KEYWORDS =========
 
+@primitive('while')
+def while_keyword(args, context):
+    if not args or len(args) != 1:
+        raise ScriptError(context, '"while" keyword requires expression')
+
+    # TODO consolidate with if keyword here
+    new_ctx = Context(parent_context=context)
+    new_ctx.line_no = context.line_no
+    new_ctx.parent_keyword = context.parent_keyword
+    new_ctx.loop_top = context.line_no
+    new_ctx.state = InterpreterState.STATE_BLOCK_DONE
+    new_ctx.skipping = True
+
+    # If we're skipping everything in this block, skip everything in child
+    # else per the expression
+
+    if not context.skipping and args[0] != '0':
+        new_ctx.state = InterpreterState.STATE_WHILE
+        new_ctx.loop_top = context.line_no
+        new_ctx.skipping = False
+    return new_ctx, None
+
+
 # ===== Control Flow =====
 
 @primitive('if')
@@ -183,7 +207,7 @@ def if_keyword(args, context):
 
     # If we're skipping everything in this block, skip everything in child
     if context.skipping:
-        new_ctx.state = InterpreterState.STATE_IF_DONE
+        new_ctx.state = InterpreterState.STATE_DONE
         new_ctx.skipping = True
         return new_ctx, None
 
@@ -201,10 +225,10 @@ def elif_keyword(args, context):
     if not args or len(args) != 1:
         raise ScriptError(context, '"elif" keyword requires one argument')
 
-    if context.state == InterpreterState.STATE_IF_DONE:
+    if context.state == InterpreterState.STATE_DONE:
         return context, None
     if context.state == InterpreterState.STATE_IF_RUN:
-        context.state = InterpreterState.STATE_IF_DONE
+        context.state = InterpreterState.STATE_DONE
         context.skipping = True
     elif context.state == InterpreterState.STATE_IF_PASS:
         if args[0] != '0':  # TODO Hey so muc more to do here
@@ -236,7 +260,7 @@ def end_keyword(args, context=None, **kwargs):
     safe_end = (InterpreterState.STATE_IF_RUN,
                 InterpreterState.STATE_IF_PASS,
                 InterpreterState.STATE_ELSE,
-                InterpreterState.STATE_IF_DONE)
+                InterpreterState.STATE_DONE)
 
     if args and len(args) > 0:
         raise ScriptError(context, '"end" keyword has arguments')
@@ -245,7 +269,10 @@ def end_keyword(args, context=None, **kwargs):
         raise ScriptError(context, '"end" keyword not within "if" statement')
 
     pcontext = context.parent_context
-    pcontext.line_no = context.line_no + 1  # TODO is true?
+    if context.loop_top != -1:
+        pcontext.line_no = context.loop_top
+    else:
+        pcontext.line_no = context.line_no + 1  # TODO is true?
     return pcontext, None
 
 
